@@ -82,7 +82,7 @@ Examples:
 
 ### Mapping tables
 
-Vor mapping tables for example mapping Data between scopes.
+Mapping tables for example map (translate) Data between scopes.
 
 *Syntax*:
  ```sql

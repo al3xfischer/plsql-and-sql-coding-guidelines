@@ -10,7 +10,7 @@
 6. Create a glossary with all accepted abbreviations.
 7. Never use keywords as names. A list of keywords may be found in the dictionary view `v$reserved_words`.
 8. Avoid adding redundant or meaningless prefixes and suffixes to identifiers.<br/>Example: `create table emp_table`.
-9. Always use one spoken language (e.g. English, German, French) for all objects in your application.
+9. Always use the spoken language (German) for all objects in the application.
 10. Always use the same names for elements with the same meaning.
 
 ## Naming Conventions for PL/SQL
@@ -21,85 +21,184 @@ A widely used convention is to follow a `{prefix}variablecontent{suffix}` patter
 
 The following table shows a possible set of naming conventions. 
 
-Identifier                   | Prefix | Suffix  | Example
----------------------------- | ------ | ------- | --------
-Global Variable              | `g_`   |         | `g_version`
-Local Variable               | `l_`   |         | `l_version`
-Cursor                       | `c_`   |         | `c_employees`
-Record                       | `r_`   |         | `r_employee`
-Array / Table                | `t_`   |         | `t_employees`
-Object                       | `o_`   |         | `o_employee`
-Cursor Parameter             | `p_`   |         | `p_empno`
-In Parameter                 | `in_`  |         | `in_empno`
-Out Parameter                | `out_` |         | `out_ename`
-In/Out Parameter             | `io_`  |         | `io_employee`
-Record Type Definitions      | `r_`   | `_type` | `r_employee_type`
-Array/Table Type Definitions | `t_`   | `_type` | `t_employees_type`
-Exception                    | `e_`   |         | `e_employee_exists`
-Constants                    | `co_`  |         | `co_empno`
-Subtypes                     |        | `_type` | `big_string_type`
+Identifier                   | Prefix | Data type | Suffix  | Example
+---------------------------- | ------ | -------- | ------- | --------
+Global Variable              | `g_`   | Number   |         | `g_num_version`
+Local Variable               | `l_`   | Varchar2 |         | `l_var2_version`
+Cursor                       | `cu_`  |          |         | `cu_employees`
+Record                       | `r_`   |          |         | `r_employee`
+Array / Table                | `t_`   |          |         | `t_employees`
+Object                       | `o_`   |          |         | `o_employee`
+Cursor Parameter             | `p_`   |          |         | `p_num_empno_oid`
+In Parameter                 | `in_`  |          |         | `in_empno`
+Out Parameter                | `out_` |          |         | `out_ename`
+Record Type Definitions      | `r_`   |          | `_type` | `r_employee_type`
+Array/Table Type Definitions | `t_`   |          | `_type` | `t_employees_type`
+Exception                    | `e_`   |          |         | `e_employee_exists`
+Constants                    | `c_`   |          |         | `c_empno`
+
+Data type | Abbreviation 
+--------  | ------------
+Number    | `num`
+Varchar2  | `var2`
+Char      | `chr`
+Boolean   | `bool`
+Date      | `date`
+Clob      | `clob`
+Blob      | `blob`
+
 
 ## Database Object Naming Conventions
 
 Never enclose object names (table names, column names, etc.) in double quotes to enforce mixed case or lower case object names in the data dictionary.
 
-### Collection Type
+### Naming prefix
 
-A collection type should include the name of the collected objects in their name. Furthermore, they should have the suffix `_ct` to identify it as a collection.
+Scope | Prefix
+----- | -------
+TGD Apex Core Objects | not applicable
+Labor | LAB_
+Import-Tabls VIS | IMP_VOE_
 
-Optionally prefixed by a project abbreviation.
+#### TGD Protokoll
+
+Use the prefix `PD_` for protocol definitions.
+
+Example:
+
+* `pd_protokoll`  
+* `pd_protokoll_frage`  
+* `pd_protokoll_frageblock`
+
+### Table
+
+Singular name of what is contained in the table.
+Optionally prefixed by a project abbreviation. (see naming prefix)
 
 Examples:
 
-* `employees_ct`
-* `orders_ct`
+* `betrieb`
+* `tierarzt`
+
+### Mapping tables
+
+Vor mapping tables for example mapping Data between scopes.
+
+*Syntax*:
+ ```sql
+  MAP_[BASE_ENTITY]
+ ```
+
+Example:  
+ Mapping `tierart` between LAB and TGD.
+ ```sql
+  MAP_TIERART
+
+ ```
+ 
+### Journaling tables
+
+Are prefixed `J_` followed by the name of the base table.
+
+*Syntax*:
+```sql
+ J_[BASE_ENTITY]
+```
+
+Example:
+```sql
+ J_PERSON
+ J_BENUTZER
+ J_BERECHTIGUNG
+```
+##### Snippet for creating journaling tables
+
+<details>
+    <summary>Snippet</summary>
+
+```sql
+    declare
+          v_out_var2_sql_table clob;
+          v_out_var2_sql_trigger clob;
+    begin
+      core_generator_pkg.refresh_jour_table(
+          p_in_var2_table_name => 'ARZNEIMITTELANWENDUNG_XML_TAG',
+          po_var2_sql           => v_out_var2_sql_table,
+          po_var2_sql_trigger   => v_out_var2_sql_trigger
+      );
+      core_generator_pkg.print_clob_to_output (p_clob => v_out_var2_sql_table);
+      core_generator_pkg.print_clob_to_output (p_clob => v_out_var2_sql_trigger);
+    end;
+```
+
+</details>
 
 ### Column
 
-Singular name of what is stored in the column (unless the column data type is a collection, in this case you use plural[^1] names)
+Singular name of what is stored in the column (unless the column data type is a collection, in this case you use plural names). Add a describing comment for every column.
 
-Add a comment to the database dictionary for every column.
+- Each tables get a unique prefix. Every column name starts with this unique prefix
+- Primary keys end with the suffix `_OID`
+- Flags are abbreviated with `KZ` (data type `char(1 char)`)
+
 
 ### Check Constraint
 
-Table name or table abbreviation followed by the column and/or role of the check constraint, a `_ck` and an optional number suffix.
+Table name followed by the column and the suffix `_chk`.
 
-Examples:
+Syntax:
+```sql
+[TABLE]_[COLUMN without PREFIX]_CHK
+```
 
-* `employees_salary_min_ck`
-* `orders_mode_ck`
+Example:
+```sql
+BENUTZER_KZ_GELOESCHT_CHK
+```
 
 ### DML / Instead of Trigger
 
-Choose a naming convention that includes:
+Name of the object to which the trigger is assigned
+DML_OP_Abbreviation
+Suffix "_TRG"
 
-either
+Syntax:
+```sql
+[TABLE]_AUDIT_TRG
+[TABLE]_JOURNALE_TRG
+[TABLE]_[DML_OP_ABREVIATION]_TRG
+```
+[DML_OP_ABREVIATION]:
 
-* the name of the object the trigger is added to,
-* any of the triggering events:
-    * `_br_iud` for Before Row on Insert, Update and Delete
-    * `_io_id` for Instead of Insert and Delete
+ - B: before
+ - A: after
+ - X: instead of 
+ - I: insert
+ - U: update
+ - D: delete
+ 
+Example: 
+```sql
+BETRIEB_AUDIT_TRG
+BETRIEB_JOURNAL_TRG
+BENUTZER_BIU_TRG
+```
 
-or
-
-* the name of the object the trigger is added to,
-* the activity done by the trigger,
-* the suffix `_trg`
-
-Examples:
-
-* `employees_br_iud`
-* `orders_audit_trg`
-* `orders_journal_trg`
 
 ### Foreign Key Constraint
 
-Table abbreviation followed by referenced table abbreviation followed by a `_fk` and an optional number suffix.
+Table followed by referenced table abbreviation followed by a `_fk` and an optional number suffix.
+Name of the referenced table, current table, suffix `_FK`.
 
-Examples:
+Syntax:
+```sql
+ [REF_TABLE]_[CURRENT_TABLE]_FK
+```
+Example:
 
-* `empl_dept_fk`
-* `sct_icmd_ic_fk1`
+`REF_TABLE`: Benutzer  
+`CURRENT_TABLE`: BENUTZER_BENUTZERROLLE  
+`BENUTZER_BENUTZER_BENUTZERROLLE_FK`
 
 ### Function
 
@@ -117,44 +216,51 @@ If more than one function provides the same outcome, you have to be more specifi
 
 Indexes serving a constraint (primary, unique or foreign key) are named accordingly. 
 
-Other indexes should have the name of the table and columns (or their purpose) in their name and should also have `_idx` as a suffix.
+#### Primary
 
-### Object Type
+Are defined using the PKs.
 
-The name of an object type is built by its content (singular) followed by a `_ot` suffix.
+#### Nonunique index for FK columns
 
-Optionally prefixed by a project abbreviation.
+`[CONSTRAINTNAME]_IDX`
 
-Example: `employee_ot`
+#### Unique index
+
+`[TABLE]_[COLUMN without prefix]_UIDX`
+
 
 ### Package
 
-Name is built from the content that is contained within the package.
+Name is built from the content that is contained within the package followed by the suffix `_pkg`.
 
-Optionally prefixed by a project abbreviation.
+Optionally prefixed by a scope abbreviation and purpose.
+
+Meaning | Prefix
+------- | -----
+Core (business logic) | `core_`
+Presentation layer (data preparation for display) | `pl_`
+Data access (obsolete) | `DA_`
+
 
 Examples:
 
-* `employees_api` - API for the employee table
+* `CORE_BETRIEB_PKG` - Main funcionalities for the domain entity `betrieb`
+* `PL_TIERARZT_PKG` - Presentation layer for `tierarzt`.
 * `logging_up` - Utilities including logging support
 
 ### Primary Key Constraint
 
-Table name or table abbreviation followed by the suffix `_pk`.
+Table name followed by the suffix `_pk`.
+
+Most of the time the constraint is created using an `identity` column.
 
 Examples:
 
-* `employees_pk`
-* `departments_pk`
-* `sct_contracts_pk`
+* `benutzer_pk`
 
 ### Procedure
 
 Name is built from a verb followed by a noun. The name of the procedure should answer the question “What is done?” 
-
-Procedures and functions are often named with underscores between words because some editors write all letters in uppercase in the object tree, so it is difficult to read them.
-
-Optionally prefixed by a project abbreviation.
 
 Examples:
 
@@ -164,96 +270,35 @@ Examples:
 
 ### Sequence
 
-Name is built from the table name (or its abbreviation) the sequence serves as primary key generator and the suffix `_seq` or the purpose of the sequence followed by a `_seq`.
-
-Optionally prefixed by a project abbreviation.
+Most of the time sequences are created implicit with the keyword `identity`.
+If a sequence is created manually use the following convention.
+Name is built from the table name the sequence serves as primary key generator and the suffix `_seq`.
 
 Examples:
 
-* `employees_seq`
-* `order_number_seq`
+* `persin_seq`
+* `kontakt_seq`
 
 ### Synonym
 
 Synonyms should be used to address an object in a foreign schema rather than to rename an object. Therefore, synonyms should share the name with the referenced object.
 
-### System Trigger
-
-Name of the event the trigger is based on.
-
-* Activity done by the trigger
-* Suffix `_trg`
-
-Examples:
-
-* `ddl_audit_trg`
-* `logon_trg`
-
-### Table
-
-Plural[^1] name of what is contained in the table (unless the table is designed to always hold one row only – then you should use a singular name).
-
-Suffixed by `_eb` when protected by an editioning view.
-
-Add a comment to the database dictionary for every table and every column in the table.
-
-Optionally prefixed by a project abbreviation.
-
-Examples:
-
-* `employees`
-* `departments`
-* `countries_eb` - table interfaced by an editioning view named `countries`
-* `sct_contracts`
-* `sct_contract_lines`
-* `sct_incentive_modules`
-
-### Temporary Table (Global Temporary Table)
-
-Naming as described for tables.
-
-Optionally suffixed by `_tmp`
-
-Optionally prefixed by a project abbreviation.
-
-Examples:
-
-* `employees_tmp`
-* `contracts_tmp`
-
 ### Unique Key Constraint
 
-Table name or table abbreviation followed by the role of the unique key constraint, a `_uk` and an optional number suffix.
-
-Examples:
-
-* `employees_name_uk`
-* `departments_deptno_uk`
-* `sct_contracts_uk`
-* `sct_coli_uk`
-* `sct_icmd_uk1`
+Are not created explicitly. Only by using unique indeces.
 
 ### View
 
-Plural[^1] name of what is contained in the view.
-Optionally suffixed by an indicator identifying the object as a view (mostly used, when a 1:1 view layer lies above the table layer)
+Singular name of what is contained in the view followed by the suffix `_v`.
+Optionally prefixed by a scope abbreviation and purpose.
 
-Editioning views are named like the original underlying table to avoid changing the existing application code when introducing edition based redefinition (EBR).
-
-Add a comment to the database dictionary for every view and every column.
-
-Optionally prefixed by a project abbreviation.
+See `Packages` for scope and purpose.
 
 Examples:
 
-* `active_orders`
-* `orders_v` - a view to the orders table
-* `countries` - an editioning view for table `countries_eb`
+* `benutzer_v`
+* `betreuungsvertrag_v`
 
-[^1]:
-    We see a table and a view as a collection. A jar containing beans is labeled "beans". 
-    In Java we call such a collection also "beans" (`List<Bean> beans`) and name an entry "bean" 
-    (`for (Bean bean : beans) {...}`). An entry of a table is a row (singular) and a table can 
-    contain an unbounded number of rows (plural). This and the fact that the Oracle Database uses 
-    the same concept for their tables and views lead to the decision to use the plural 
-    to name a table or a view.
+### Materialized View
+
+For materialized views the same rules are applied as for views except the prefix `_mv`.
